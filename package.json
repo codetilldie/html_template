@@ -1,0 +1,22 @@
+{
+  "name": "htmltemplate",
+  "version": "0.1.0",
+  "description": "A template framework write by javascript, can use for front-end and back-end",
+  "main": "template.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/tilfon"
+  },
+  "keywords": [
+    "javascript",
+    "template",
+    "front-end",
+    "back-end"
+  ],
+  "author": "Todd Fon",
+  "email": "tilfon9017@gmail.com",
+  "license": "MIT"
+}

@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+node-simplehttpserver ./ 9000 & \
+coffee -cw --no-header -o build/ src/

@@ -1,0 +1,18 @@
+{# args: matchlist, date #}
+
+<div id='date-{{ date }}'>{{ date }}</div>
+
+<ul>
+{% for index, match in matchlist | reverse %}
+
+  <li>
+    <span>
+    {{ match.starttime | getDate:match.status | truncate:10,true }}
+    </span>
+    <span>
+      {{ match.home }}
+    </span>
+  </li>
+
+{% endfor %}
+</ul>
