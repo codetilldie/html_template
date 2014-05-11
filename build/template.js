@@ -7,17 +7,8 @@
     HTMLTemplate.prototype._handlers = null;
 
     function HTMLTemplate() {
-      var method, name, _ref;
       this._handlers = [];
-      this._Filter = function() {
-        Filter.apply(this, arguments);
-        return this;
-      };
-      _ref = Filter.prototype;
-      for (name in _ref) {
-        method = _ref[name];
-        this._Filter.prototype[name] = method;
-      }
+      this._filter = new Filter;
       return this;
     }
 
@@ -32,9 +23,9 @@
       templateString = this._addSlashes(templateString);
       templateString = this._parseSyntax(templateString);
       templateString = this._parseData(templateString);
-      this._compiledString = "" + args + "\nvar __ret = [];\n__ret.push(\"" + templateString + "\");\nreturn __ret.join('');";
+      this._compiledString = "\"use strict\";\n" + args + "\nvar __ret = [];\n__ret.push(\"" + templateString + "\");\nreturn __ret.join('');";
       try {
-        this._render = new Function('__context', '__Filter', '__assert', '__isArray', '__isObject', '__foreach', this._compiledString);
+        this._render = new Function('__context', '__filter', '__assert', '__isArray', '__isObject', '__foreach', this._compiledString);
       } catch (_error) {
         err = _error;
         if (this._templateUrl) {
@@ -169,14 +160,14 @@
         throw 'HTMLTemplate.renderToHtml(context): context must be JSON';
       }
       context = context || {};
-      return this._render(context, this._Filter, assert, isArray, isObject, each);
+      return this._render(context, this._filter, assert, isArray, isObject, each);
     };
 
     HTMLTemplate.prototype.addFilter = function(name, func) {
       if (arguments.length !== 2) {
         throw "HTMLTemplate.addFilter(name, func): args required 2";
       }
-      this._Filter.prototype[name] = function() {
+      this._filter[name] = function() {
         func.apply(this, arguments);
         return this;
       };
@@ -184,19 +175,15 @@
     };
 
     HTMLTemplate.prototype.addFilters = function(filters) {
-      var method, name;
       if (!isObject(filters)) {
-        throw "HTMLTemplate.addFilters(filters): filters must be JSON";
+        throw "HTMLTemplate.addFilters(filters): filters must be an object";
       }
-      for (name in filters) {
-        method = filters[name];
-        this._Filter.prototype[name] = (function(method) {
-          return function() {
-            method.apply(this, arguments);
-            return this;
-          };
-        })(method);
-      }
+      each(filters, function(method, name) {
+        return this._filter[name] = function() {
+          method.apply(this, arguments);
+          return this;
+        };
+      });
       return this;
     };
 
@@ -305,7 +292,7 @@
     };
 
     HTMLTemplate.prototype._parseFilter = function(str, s) {
-      var arr, f, filters, _i, _len;
+      var arr, filters;
       if (s.indexOf("|") === -1) {
         return s;
       }
@@ -313,18 +300,17 @@
       if (filters.length === 2 && filters[1] === '') {
         throw "HTMLTemplate: invalid syntax " + str;
       }
-      arr = ["new __Filter(" + filters[0] + ", '" + str + "')"];
+      arr = ["__filter.__set(" + filters[0] + ", '" + str + "')"];
       filters.shift();
-      for (_i = 0, _len = filters.length; _i < _len; _i++) {
-        f = filters[_i];
+      each(filters, function(f) {
         f = trim(f);
         if (f.indexOf(':') !== -1) {
           f = f.replace(/:(.+)/, '($1)');
         } else {
           f += '()';
         }
-        arr[arr.length] = f;
-      }
+        return arr[arr.length] = f;
+      });
       return arr.join(".");
     };
 
@@ -336,15 +322,12 @@
       var ret;
       ret = [];
       str.replace(/{#\s*args:([\s\S]*?)\s*#}/, function(a, s) {
-        var v, vars, _i, _len, _results;
+        var vars;
         vars = s.split(/\s*,\s*/);
-        _results = [];
-        for (_i = 0, _len = vars.length; _i < _len; _i++) {
-          v = vars[_i];
+        return each(vars, function(v) {
           v = v.replace(/^\s*|\s*$/g, '');
-          _results.push(ret.push("" + v + " = __context['" + v + "']"));
-        }
-        return _results;
+          return ret.push("" + v + " = __context['" + v + "']");
+        });
       });
       if (ret.length) {
         return "var " + (ret.join(',')) + ";";
@@ -368,7 +351,7 @@
       temp = this._parseFilter("{% for" + expr + " %}", list);
       list = this._stripFilter(list);
       i = this._data_idx++;
-      filter = "var __data" + i + " = " + temp + ";\nif (__data" + i + " instanceof __Filter)\n    __data" + i + " = __data" + i + ".toString();\nvar log = \"HTMLTemplate: {%for" + expr + "%} " + list + " invalid list\";\n__assert(__isArray(__data" + i + ") || __isObject(__data" + i + "), log);";
+      filter = "var __data" + i + " = " + temp + ";\nif (__data" + i + " === __filter)\n    __data" + i + " = __filter.toString();\nvar log = \"HTMLTemplate: {%for" + expr + "%} " + list + " invalid list\";\n__assert(__isArray(__data" + i + ") || __isObject(__data" + i + "), log);";
       if (parts[0].indexOf(',') !== -1) {
         kv = parts[0].split(/\s*,\s*/);
         key = kv[0];
@@ -479,6 +462,14 @@
     gte: '>='
   };
 
+  if (typeof this.console === 'undefined') {
+    this.console = {
+      log: function() {
+        return alert(Array.prototype.join.call(arguments, ''));
+      }
+    };
+  }
+
   trim = (function() {
     if (String.prototype.trim) {
       return function(str) {
@@ -492,13 +483,17 @@
   })();
 
   Filter = (function() {
-    function Filter(data, express) {
+    function Filter() {}
+
+    Filter.prototype.__set = function(data, express) {
       this.data = data;
       this.express = express;
-      this.toString = function() {
-        return this.data;
-      };
-    }
+      return this;
+    };
+
+    Filter.prototype.toString = function() {
+      return this.data;
+    };
 
     Filter.prototype.trim = function() {
       assert(typeof this.data === 'string', "Filter.trim: " + this.data + " is not a string, from " + this.express);
@@ -574,27 +569,23 @@
     };
 
     Filter.prototype.reverse = function() {
-      var item, tmp, _i, _len, _ref;
+      var tmp;
       assert(isArray(this.data), "Filter.reverse: " + this.data + " is not an array, from " + this.express);
       tmp = [];
-      _ref = this.data;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        item = _ref[_i];
-        tmp.unshift(item);
-      }
+      each(this.data, function(item) {
+        return tmp.unshift(item);
+      });
       this.data = tmp;
       return this;
     };
 
     Filter.prototype.count = function() {
-      var count, k, v, _ref;
+      var count;
       assert(isObject(this.data), "Filter.count: " + this.data + " is not an object, from " + this.express);
       count = 0;
-      _ref = this.data;
-      for (k in _ref) {
-        v = _ref[k];
-        count += 1;
-      }
+      each(this.data, function() {
+        return count += 1;
+      });
       return count;
     };
 

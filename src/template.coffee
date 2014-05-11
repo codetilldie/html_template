@@ -5,11 +5,7 @@ class HTMLTemplate
 
     constructor: () ->
         @_handlers = []
-        @_Filter = ->
-            Filter.apply @, arguments
-            return @
-        for name, method of Filter.prototype
-            @_Filter.prototype[name] = method
+        @_filter = new Filter
         return @
 
     compileString: (templateString) ->
@@ -22,6 +18,7 @@ class HTMLTemplate
         templateString = @_parseData     templateString
 
         @_compiledString = """
+            "use strict";
             #{args}
             var __ret = [];
             __ret.push("#{templateString}");
@@ -30,7 +27,7 @@ class HTMLTemplate
 
         try
             @_render = new Function(
-                '__context', '__Filter',   '__assert',
+                '__context', '__filter',   '__assert',
                 '__isArray', '__isObject', '__foreach', @_compiledString)
         catch err
             console.log('Error from:', @_templateUrl) if @_templateUrl
@@ -121,25 +118,23 @@ class HTMLTemplate
         if context isnt undefined and not isObject(context)
             throw 'HTMLTemplate.renderToHtml(context): context must be JSON'
         context = context or {}
-        return @_render context, @_Filter, assert, isArray, isObject, each
+        return @_render context, @_filter, assert, isArray, isObject, each
 
     addFilter: (name, func) ->
         if arguments.length isnt 2
             throw "HTMLTemplate.addFilter(name, func): args required 2"
-        @_Filter.prototype[name] = ->
+        @_filter[name] = ->
             func.apply @, arguments
             return @
         return @
 
     addFilters: (filters) ->
         if not isObject(filters)
-            throw "HTMLTemplate.addFilters(filters): filters must be JSON"
-        for name, method of filters
-            @_Filter.prototype[name] = ((method) ->
-                return ->
-                    method.apply @, arguments
-                    return @
-            )(method)
+            throw "HTMLTemplate.addFilters(filters): filters must be an object"
+        each filters, (method, name) ->
+            @_filter[name] = ->
+                method.apply @, arguments
+                return @
         return @
 
     debug: ->
@@ -222,9 +217,9 @@ class HTMLTemplate
         filters = s.split /\s*\|\s*/
         if filters.length is 2 and filters[1] is ''
             throw "HTMLTemplate: invalid syntax #{str}"
-        arr = ["new __Filter(#{filters[0]}, '#{str}')"]
+        arr = ["__filter.__set(#{filters[0]}, '#{str}')"]
         filters.shift()
-        for f in filters
+        each filters, (f) ->
             f = trim f
             if f.indexOf(':') isnt -1
                 f = f.replace /:(.+)/, '($1)'
@@ -240,7 +235,7 @@ class HTMLTemplate
         ret = []
         str.replace /{#\s*args:([\s\S]*?)\s*#}/, (a, s) ->
             vars = s.split /\s*,\s*/
-            for v in vars
+            each vars, (v) ->
                 v = v.replace /^\s*|\s*$/g, ''
                 ret.push "#{v} = __context['#{v}']"
         return if ret.length then "var #{ret.join(',')};" else ''
@@ -262,8 +257,8 @@ class HTMLTemplate
         i    = @_data_idx++
         filter = """
             var __data#{i} = #{temp};
-            if (__data#{i} instanceof __Filter)
-                __data#{i} = __data#{i}.toString();
+            if (__data#{i} === __filter)
+                __data#{i} = __filter.toString();
             var log = "HTMLTemplate: {%for#{expr}%} #{list} invalid list";
             __assert(__isArray(__data#{i}) || __isObject(__data#{i}), log);
         """
@@ -351,6 +346,10 @@ logicOperators = {
     gte:  '>='
 }
 
+if typeof this.console is 'undefined'
+    this.console = log: ->
+        alert Array::join.call(arguments, '')
+
 trim = (->
     if String::trim
         return (str) ->
@@ -362,9 +361,13 @@ trim = (->
 
 class Filter
 
-    constructor: (@data, @express) ->
-        @toString = ->
-            return @data
+    __set: (data, express) ->
+        @data    = data
+        @express = express
+        return @
+
+    toString: ->
+        return @data
     
     trim: ->
         assert typeof @data is 'string',
@@ -441,7 +444,7 @@ class Filter
         assert isArray(@data),
             "Filter.reverse: #{@data} is not an array, from #{@express}"
         tmp = []
-        for item in @data
+        each @data, (item) ->
             tmp.unshift item
         @data = tmp
         return @
@@ -450,7 +453,7 @@ class Filter
         assert isObject(@data),
             "Filter.count: #{@data} is not an object, from #{@express}"
         count = 0
-        for k, v of @data
+        each @data, ->
             count += 1
         return count
 
