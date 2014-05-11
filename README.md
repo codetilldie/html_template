@@ -123,6 +123,56 @@ Quick Start
 
 	The function start with `/*<!--` and end with `-->*/`
 	
+Template Syntax
+===
+* `for`
+	
+	```
+	{% for key, val in object %}
+	{% endfor %}
+	
+	{% for val in object %}
+	{% endfor %}
+	
+	{% for index, item in array %}
+	{% endfor %}
+	
+	{% for item in array %}
+	{% endfor %}
+	```
+	
+* `if, ifequal, ifnotequal, else`
+
+	```
+	{% if users.length %}
+	{% else %}
+	{% endif %}
+	
+	{% ifequal users.length 0 %}
+	{% else %}
+	{% endifequal %}
+	
+	{% ifnotequal user.length 0 %}
+	{% else %}
+	{% endifnotequal %}
+	```
+	
+* `is, isnt, not, or, and, gt, lt, ge, le`
+
+	```
+	is   : ===
+	isnt : !==
+	not  : !
+	or   : ||
+	and  : &&
+	gt   : >
+	lt   : <
+	ge   : >=
+	le   : <=
+	```
+
+
+	
 API
 ===
 <table>
@@ -164,6 +214,16 @@ API
   <tr>
     <td>oncompiled</td>
     <td>handler, [data_context]</td>
-    <td>handler, JSON. It would call renderToHtml and pass the html string as arg of handler</td>
+    <td>Function, JSON. It would call renderToHtml and pass the html string as arg of handler</td>
+  </tr>
+  <tr>
+    <td>addFilter</td>
+    <td>filter_name, method</td>
+    <td>String, Function. It let you custom your filter method</td>
+  </tr>
+  <tr>
+    <td>addFilters</td>
+    <td>filters</td>
+    <td>JSON. Key is filter_name and value is filter method</td>
   </tr>
 </table>
