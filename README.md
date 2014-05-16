@@ -93,11 +93,14 @@ Quick Start
 	  ]
 	};
 	
+	// it would return the html string
+	var html = my_tpl.renderToHtml(data_model)
+	
 	// it would append to document.body
 	my_tpl.renderToDom(document.body, data_model);
 	
 	// it would replace the target dom
-	my_tpl.renderAsDom(document.body.lastChild, data_model);
+	my_tpl.renderAtDom(document.body.lastChild, data_model);
 	
 	// it would pass the html string as the first argument
 	my_tpl.oncompiled(function (html) {
@@ -157,7 +160,7 @@ Template Syntax
 	{% endifnotequal %}
 	```
 	
-* `is, isnt, not, or, and, gt, lt, ge, le`
+* `is, isnt, not, or, and, gt, lt, gte, lte`
 
 	```
 	is   : ===
@@ -167,8 +170,8 @@ Template Syntax
 	and  : &&
 	gt   : >
 	lt   : <
-	ge   : >=
-	le   : <=
+	gte  : >=
+	lte  : <=
 	```
 
 
@@ -207,7 +210,7 @@ API
     <td>String|HTMLElement, JSON. It would append to the dom</td>
   </tr>
   <tr>
-    <td>renderAsDom</td>
+    <td>renderAtDom</td>
     <td>targetDom, [data_context]</td>
     <td>String|HTMLElement, JSON. It would replace the dom</td>
   </tr>
