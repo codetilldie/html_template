@@ -345,6 +345,15 @@ logicOperators = {
     gte:  '>='
 }
 
+escapeChars = {
+    '&' : "&amp;"
+    ' ' : "&nbsp;"
+    '"' : "&quot;"
+    "'" : "#39;"
+    "<" : "&lt;"
+    ">" : "&gt;"
+}
+
 if typeof this.console is 'undefined'
     this.console = log: ->
         alert Array::join.call(arguments, '')
@@ -435,7 +444,7 @@ class Filter
         return @
 
     default: (val) ->
-        if @data is undefined
+        if @data is undefined or @data is null
             @data = val
         return @
 
@@ -466,8 +475,8 @@ if typeof module isnt 'undefined'
     module.exports = HTMLTemplate
 
 # define as a requirejs module
-else if typeof requirejs isnt 'undefined'
-    define [], ->
+else if typeof define is 'function' and define.amd
+    define 'HTMLTemplate', [], ->
         return HTMLTemplate
 
 # define as a common javascript module

@@ -230,3 +230,139 @@ API
     <td>JSON. Key is filter_name and value is filter method</td>
   </tr>
 </table>
+
+Filter
+===
+
+```
+var my_tpl = new HTMLTemplate();
+
+my_tpl.addFilter('customfilter', function customFilter() {
+    // your filter implements here
+});
+```
+
+If the filter express is `{{ data | customfilter }}`, you can get `data` by using `this.data` in the filter handler of customfilter, and you change the value of `this.data` for `data` change, just like this:
+
+```
+function customFilter() {
+    // this.data is 'data' of '{{ data | customfilter }}'
+    if (this.data === true) {
+        this.data = 'This data is true';
+    } else if (this.data === false){
+        this.data = 'This data is false';
+    } else {
+    	this.data = 'This data is not a boolean value';
+    }
+}
+```
+
+Now, you could add args for the filter handler like this:
+
+```
+ {{ users | getUserBy: age, 'male' }}
+```
+`users` and `age` is variable, 'male' is a string. 
+
+Use the args in handler like this:
+
+```
+function getUserBy(age, gender) {
+    var users = this.data;
+    for (var i = 0, user; user = users[i]; i++) {
+       if (user.age === age && user.gender === gender) {
+           this.data = user.name;
+           break;
+       }
+    }
+}
+```
+
+Default filters
+===
+
+HTMLTemplate has implements some default common filters
+
+`trim`
+	
+	{{ ' string ' | trim }}
+	// => 'string'
+	
+`lower`
+
+	{{ 'stRiNg' | lower}}
+	// => 'string'
+	
+`upper`
+	
+	{{ 'string' | upper}}
+	// => 'STRING'
+	
+`capfirst`
+
+	{{ 'string' | capfirst }}
+	// => 'String'
+	
+`escape`
+
+	{{ '< &' | escape }}
+	// => '&lt;&nbsp;&amp;'
+	
+`truncate`
+
+	{{ 'this is a long string' | truncate: 6, true }}
+	// => 'this i...'
+	
+	{{ 'this is a long string' | truncate: 8, false }}
+	// => 'this is '
+
+`addslashes`
+
+	{{ 'My name is "Fon", and you?' | addslashes}}
+	// => 'My name is \"Fon\", and you?'
+	
+`stripslashes`
+
+	{{ '\\' | stripslashes }}
+	// => '\'
+	
+
+`striptags`
+
+	{{ '<div>Content text</div>' | striptags }}
+	// => 'Context text'
+	
+`reverse`
+
+	{{ [1,2,3,4] | reverse }}
+	// => [4,3,2,1]
+	
+`length`
+
+	{{ 'string' | length }}
+	// => 6
+	
+	{{ [1,2,3,4,5] | length }}
+	// => 5
+	
+`count`
+
+	{{ {} | count }}
+	// => 0
+	
+	{{ {name: 'Fon', gender: 'male'} | count }}
+	// => 2
+	
+`default`
+
+	{{ null | default:"Not a null value" }}
+	// => "Not a null value"
+	
+	{{ undefined | default: "Not an undefined value"}}
+	// => "Not an undefined value"
+	
+	{{ "" | default: "Cannot replace an empty string"}}
+	// => ""
+	
+	{{ [] | default: "Cannot replace an empty array"}}
+	// => []
