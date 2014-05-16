@@ -231,7 +231,7 @@ API
   </tr>
 </table>
 
-Filter
+Create Filter
 ===
 
 ```
@@ -281,7 +281,7 @@ function getUserBy(age, gender) {
 Default filters
 ===
 
-HTMLTemplate has implements some default common filters
+HTMLTemplate is supported some default common filters
 
 `trim`
 	
@@ -366,3 +366,12 @@ HTMLTemplate has implements some default common filters
 	
 	{{ [] | default: "Cannot replace an empty array"}}
 	// => []
+	
+`debug`
+
+	{{ [1,2,3] | debug | reverse | debug }}
+	// log: [express] {{ [1,2,3] | debug | reverse | debug }}
+	// log: [data]      [1,2,3]	
+	// log: [express] {{ [1,2,3] | debug | reverse | debug }}
+	// log: [data]      [3,2,1]
+	// => [3,2,1]
