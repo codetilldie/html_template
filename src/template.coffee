@@ -131,7 +131,7 @@ class HTMLTemplate
     addFilters: (filters) ->
         if not isObject(filters)
             throw "HTMLTemplate.addFilters(filters): filters must be an object"
-        each filters, (method, name) ->
+        each filters, (method, name) =>
             @_filter[name] = ->
                 method.apply @, arguments
                 return @
@@ -225,6 +225,7 @@ class HTMLTemplate
                 f = f.replace /:(.+)/, '($1)'
             else
                 f += '()'
+            f += '.toString()'
             arr[arr.length] = f
         return arr.join "."
 
@@ -257,8 +258,6 @@ class HTMLTemplate
         i    = @_data_idx++
         filter = """
             var __data#{i} = #{temp};
-            if (__data#{i} === __filter)
-                __data#{i} = __filter.toString();
             var log = "HTMLTemplate: {%for#{expr}%} #{list} invalid list";
             __assert(__isArray(__data#{i}) || __isObject(__data#{i}), log);
         """

@@ -178,12 +178,14 @@
       if (!isObject(filters)) {
         throw "HTMLTemplate.addFilters(filters): filters must be an object";
       }
-      each(filters, function(method, name) {
-        return this._filter[name] = function() {
-          method.apply(this, arguments);
-          return this;
+      each(filters, (function(_this) {
+        return function(method, name) {
+          return _this._filter[name] = function() {
+            method.apply(this, arguments);
+            return this;
+          };
         };
-      });
+      })(this));
       return this;
     };
 
@@ -309,6 +311,7 @@
         } else {
           f += '()';
         }
+        f += '.toString()';
         return arr[arr.length] = f;
       });
       return arr.join(".");
@@ -351,7 +354,7 @@
       temp = this._parseFilter("{% for" + expr + " %}", list);
       list = this._stripFilter(list);
       i = this._data_idx++;
-      filter = "var __data" + i + " = " + temp + ";\nif (__data" + i + " === __filter)\n    __data" + i + " = __filter.toString();\nvar log = \"HTMLTemplate: {%for" + expr + "%} " + list + " invalid list\";\n__assert(__isArray(__data" + i + ") || __isObject(__data" + i + "), log);";
+      filter = "var __data" + i + " = " + temp + ";\nvar log = \"HTMLTemplate: {%for" + expr + "%} " + list + " invalid list\";\n__assert(__isArray(__data" + i + ") || __isObject(__data" + i + "), log);";
       if (parts[0].indexOf(',') !== -1) {
         kv = parts[0].split(/\s*,\s*/);
         key = kv[0];
