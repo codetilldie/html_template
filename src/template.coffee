@@ -225,8 +225,8 @@ class HTMLTemplate
                 f = f.replace /:(.+)/, '($1)'
             else
                 f += '()'
-            f += '.toString()'
             arr[arr.length] = f
+        arr.push 'toString()'
         return arr.join "."
 
     _stripFilter: (str) ->
@@ -380,7 +380,7 @@ class Filter
     trim: ->
         assert typeof @data is 'string',
             "Filter.trim: #{@data} is not a string, from #{@express}"
-        trim @data
+        @data = trim @data
         return @
 
     escape: ->
