@@ -17,8 +17,8 @@ var data = {
 }
 
 tpl = new HTMLTemplate()
-tpl.addFilter('getDate', function (status) {
-    this.data = status + '|' + this.data
+tpl.addFilter('getDate', function (data, status) {
+    return  status + '|' + data
 })
 tpl.loadTemplate('t.html')
 tpl.renderToDom('content', data)

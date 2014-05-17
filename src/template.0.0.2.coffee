@@ -153,8 +153,6 @@ class HTMLTemplate
     _data_idx: 0
     _indent_count: 0,
 
-    _syntaxRe: /^([\s\S]*?){%\s*((\w+) [\s\S]*?)%}(.+){%\s*end\3[^%]+%}(.*)$/g,
-
     _regFlag: new RegExp "[^\\/*]+\\/\\*<!--|-->\\*\\/[^}]*\\}", 'gm'
 
     _indent: ->

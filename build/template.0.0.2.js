@@ -216,8 +216,6 @@
 
     HTMLTemplate.prototype._indent_count = 0;
 
-    HTMLTemplate.prototype._syntaxRe = /^([\s\S]*?){%\s*((\w+) [\s\S]*?)%}(.+){%\s*end\3[^%]+%}(.*)$/g;
-
     HTMLTemplate.prototype._regFlag = new RegExp("[^\\/*]+\\/\\*<!--|-->\\*\\/[^}]*\\}", 'gm');
 
     HTMLTemplate.prototype._indent = function() {
