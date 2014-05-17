@@ -229,6 +229,11 @@ API
     <td>filters</td>
     <td>JSON. Key is filter_name and value is filter method</td>
   </tr>
+  <tr>
+    <td>debug</td>
+    <td>null</td>
+    <td>Log the compiled template function string</td>
+  </tr>
 </table>
 
 Create Filter
@@ -242,17 +247,16 @@ my_tpl.addFilter('customfilter', function customFilter() {
 });
 ```
 
-If the filter express is `{{ data | customfilter }}`, you can get `data` by using `this.data` in the filter handler of customfilter, and you change the value of `this.data` for `data` change, just like this:
+If the filter express is `{{ data | customfilter }}`, you can get `data` by using the first argument in the filter handler of customfilter, and you must return the value, just like this:
 
 ```
-function customFilter() {
-    // this.data is 'data' of '{{ data | customfilter }}'
-    if (this.data === true) {
-        this.data = 'This data is true';
+function customFilter(data) {
+    if (data === true) {
+        return 'This data is true';
     } else if (this.data === false){
-        this.data = 'This data is false';
+        return 'This data is false';
     } else {
-    	this.data = 'This data is not a boolean value';
+    	return 'This data is not a boolean value';
     }
 }
 ```
@@ -267,13 +271,10 @@ Now, you could add args for the filter handler like this:
 Use the args in handler like this:
 
 ```
-function getUserBy(age, gender) {
-    var users = this.data;
+function getUserBy(users, age, gender) {
     for (var i = 0, user; user = users[i]; i++) {
        if (user.age === age && user.gender === gender) {
-           this.data = user.name;
-           break;
-       }
+           return user.name;       }
     }
 }
 ```
