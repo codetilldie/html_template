@@ -7,7 +7,7 @@
 
   <li>
     <span>
-    {{ match.starttime | debug | getDate:match.status | debug| truncate:10,true }}
+    {{ match.starttime | getDate:match.status | truncate:10,true }}
     </span>
     <span>
       {{ match.home }}

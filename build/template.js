@@ -1,5 +1,5 @@
 (function() {
-  var Filter, HTMLTemplate, assert, each, escapeChars, isArray, isObject, logicOperators, stripslashes, trim;
+  var Filter, HTMLTemplate, assert, each, escapeChars, indexOf, isArray, isObject, logicOperators, stripslashes, trim;
 
   HTMLTemplate = (function() {
     HTMLTemplate.prototype._compiled = false;
@@ -13,23 +13,33 @@
     }
 
     HTMLTemplate.prototype.compileString = function(templateString) {
-      var args, err;
+      var err, v, varstr;
       if (this._compiled) {
         throw 'The instance has compiled template';
       }
       this._checkGlobalSyntax(templateString);
-      args = this._getArguments(templateString);
+      this._args = [];
       templateString = this._clearComments(templateString);
       templateString = this._addSlashes(templateString);
       templateString = this._parseSyntax(templateString);
       templateString = this._parseData(templateString);
-      this._compiledString = "\"use strict\";\n" + args + "\nvar __ret = [];\n__ret.push(\"" + templateString + "\");\nreturn __ret.join('');";
+      varstr = (function() {
+        var _i, _len, _ref, _results;
+        _ref = this._args;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          v = _ref[_i];
+          _results.push("" + v + " = __context['" + v + "']");
+        }
+        return _results;
+      }).call(this);
+      this._compiledString = "var " + (varstr.join(',')) + ";\nvar __ret = [];\n__ret.push(\"" + templateString + "\");\nreturn __ret.join('');";
       try {
         this._render = new Function('__context', '__filter', '__assert', '__isArray', '__isObject', '__foreach', this._compiledString);
       } catch (_error) {
         err = _error;
         if (this._templateUrl) {
-          console.log('Error from:', this._templateUrl);
+          console.log('HTMLTemplate Error:', this._templateUrl);
         }
         throw err;
       }
@@ -40,7 +50,7 @@
 
     HTMLTemplate.prototype.compileFunction = function(templateFunction) {
       if (this._compiled) {
-        throw 'The instance has compiled template';
+        throw 'This instance has compiled template';
       }
       if (typeof templateFunction !== 'function') {
         throw "HTMLTemplate.compileFunction: given not a function";
@@ -289,6 +299,7 @@
       return str.replace(/{{([\s\S]*?)}}/g, (function(_this) {
         return function(a, s) {
           s = stripslashes(s);
+          _this._addArguments(s);
           s = _this._parseFilter("" + a, s);
           return "\", " + s + ", \"";
         };
@@ -322,36 +333,21 @@
       return str.split(/\s*\|\s*/)[0];
     };
 
-    HTMLTemplate.prototype._getArguments = function(str) {
-      var ret;
-      ret = [];
-      str.replace(/{#\s*args:([\s\S]*?)\s*#}/, function(a, s) {
-        var vars;
-        vars = s.split(/\s*,\s*/);
-        return each(vars, function(v) {
-          v = v.replace(/^\s*|\s*$/g, '');
-          return ret.push("" + v + " = __context['" + v + "']");
-        });
-      });
-      if (ret.length) {
-        return "var " + (ret.join(',')) + ";";
-      } else {
-        return '';
+    HTMLTemplate.prototype._addArguments = function(str) {
+      var arr;
+      arr = trim(str).split(/[.| ]+/);
+      str = arr[0];
+      if (str.length !== 0 && indexOf(this._args, str) === -1) {
+        return this._args.push(str);
       }
     };
-
-
-    /*
-    _include_parser: (url) ->
-        console.log url
-        return ''
-     */
 
     HTMLTemplate.prototype._for_parser = function(expr) {
       var filter, i, key, kv, list, parts, temp, val;
       parts = trim(expr).split(/\s+in\s+/);
       assert(parts.length === 2, "HTMLTemplate: {% for" + expr + " %} invalid syntax");
       list = parts[1];
+      this._addArguments(list);
       temp = this._parseFilter("{% for" + expr + " %}", list);
       list = this._stripFilter(list);
       i = this._data_idx++;
@@ -483,17 +479,32 @@
     };
   }
 
-  trim = (function() {
-    if (String.prototype.trim) {
-      return function(str) {
-        return str.trim();
-      };
-    } else {
-      return function(str) {
-        return str.replace(/^\s+|\s+$/g, '');
-      };
-    }
-  })();
+  if (String.prototype.trim) {
+    trim = function(str) {
+      return str.trim();
+    };
+  } else {
+    trim = function(str) {
+      return str.replace(/^\s+|\s+$/g, '');
+    };
+  }
+
+  if (Array.prototype.indexOf) {
+    indexOf = function(arr, item) {
+      return arr.indexOf(item);
+    };
+  } else {
+    indexOf = function(arr, item) {
+      var i, v, _i, _len;
+      if (item === v) {
+        for (v = _i = 0, _len = arr.length; _i < _len; v = ++_i) {
+          i = arr[v];
+          return i;
+        }
+      }
+      return -1;
+    };
+  }
 
   Filter = (function() {
     function Filter() {}
@@ -506,7 +517,7 @@
 
     Filter.prototype.__execute = function(method) {
       var args;
-      assert(typeof this[method] === 'function', "Filter: can't find a filter named '" + method + "' from " + this.express);
+      assert(typeof this[method] === 'function', "Filter: '" + method + "' filter not found from " + this.express);
       args = Array.prototype.slice.call(arguments, 1);
       args.unshift(this.data);
       this.data = this[method].apply(this, args);

@@ -11,15 +11,16 @@ class HTMLTemplate
     compileString: (templateString) ->
         throw 'The instance has compiled template' if @_compiled
         @_checkGlobalSyntax templateString
-        args = @_getArguments templateString
+        @_args = []
         templateString = @_clearComments templateString
         templateString = @_addSlashes    templateString
         templateString = @_parseSyntax   templateString
         templateString = @_parseData     templateString
 
+        varstr = ("#{v} = __context['#{v}']" for v in @_args)
+
         @_compiledString = """
-            "use strict";
-            #{args}
+            var #{varstr.join(',')};
             var __ret = [];
             __ret.push("#{templateString}");
             return __ret.join('');
@@ -30,7 +31,7 @@ class HTMLTemplate
                 '__context', '__filter',   '__assert',
                 '__isArray', '__isObject', '__foreach', @_compiledString)
         catch err
-            console.log('Error from:', @_templateUrl) if @_templateUrl
+            console.log('HTMLTemplate Error:', @_templateUrl) if @_templateUrl
             throw err
         
         @_compiled = true
@@ -210,6 +211,7 @@ class HTMLTemplate
     _parseData: (str) ->
         str.replace /{{([\s\S]*?)}}/g, (a, s) =>
             s = stripslashes s
+            @_addArguments s
             s = @_parseFilter "#{a}", s
             return "\", #{s}, \""
 
@@ -233,20 +235,10 @@ class HTMLTemplate
     _stripFilter: (str) ->
         return str.split(/\s*\|\s*/)[0]
 
-    _getArguments: (str) ->
-        ret = []
-        str.replace /{#\s*args:([\s\S]*?)\s*#}/, (a, s) ->
-            vars = s.split /\s*,\s*/
-            each vars, (v) ->
-                v = v.replace /^\s*|\s*$/g, ''
-                ret.push "#{v} = __context['#{v}']"
-        return if ret.length then "var #{ret.join(',')};" else ''
-
-    ###
-    _include_parser: (url) ->
-        console.log url
-        return ''
-    ###
+    _addArguments: (str) ->
+        arr = trim(str).split /[.| ]+/
+        str = arr[0]
+        @_args.push str if str.length isnt 0 and indexOf(@_args, str) is -1
 
     _for_parser: (expr) ->
         parts = trim(expr).split /\s+in\s+/
@@ -254,6 +246,7 @@ class HTMLTemplate
             "HTMLTemplate: {% for#{expr} %} invalid syntax"
         
         list = parts[1]
+        @_addArguments list
         temp = @_parseFilter "{% for#{expr} %}", list
         list = @_stripFilter list
         i    = @_data_idx++
@@ -359,14 +352,18 @@ if typeof this.console is 'undefined'
     this.console = log: ->
         alert Array::join.call(arguments, '')
 
-trim = (->
-    if String::trim
-        return (str) ->
-            str.trim()
-    else
-        return (str) ->
-            str.replace /^\s+|\s+$/g, ''
-)()
+if String::trim
+    trim = (str) -> str.trim()
+else
+    trim = (str) -> str.replace /^\s+|\s+$/g, ''
+
+if Array::indexOf
+    indexOf = (arr, item) -> arr.indexOf item
+else
+    indexOf = (arr, item) ->
+        return i for i, v in arr if item is v
+        return -1
+
 
 class Filter
 
@@ -377,7 +374,7 @@ class Filter
 
     __execute: (method) ->
         assert typeof @[method] is 'function',
-            "Filter: can't find a filter named '#{method}' from #{@express}"
+            "Filter: '#{method}' filter not found from #{@express}"
         args = Array::slice.call arguments, 1
         args.unshift @data
         @data = @[method].apply @, args

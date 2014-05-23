@@ -18,7 +18,6 @@ Quick Start
 	*A template with model:*
 	
 	```
-	{# args: users #}
 	
 	<ul>
 	
@@ -32,19 +31,18 @@ Quick Start
 	
 	</ul>	
 	```
-	`{# args: arg1_name, arg2name, ... #}` to define arguments in template
 	
-	`{# this would be a comment #}` to write a comment in template
+	* `{# this would be a comment #}` to write a comment in template
 	
-	`{% for [key], value in list %}` `{% endfor %}` to use a iterator
+	* `{% for [key], value in list %}` `{% endfor %}` to use a iterator
 	
-	`{{ data }}` as a data
+	* `{{ data }}` as a data
+	
+	* Use **key** of **data context** like `user` of `{user: {}}` directly in the template, you don't care when them are defined.
 	
 	*A template with filters and condition:*
 	
-	```
-	{# args: users, max_age #}
-	
+	```	
 	<ul>
 	
 	{% for index, user in users | reverse %}
@@ -113,8 +111,6 @@ Quick Start
 	```
 	function user_list_tpl () {
 	/*<!--
-	
-	{# args: users #}
 	
 	{% for user in users %}
 	...
@@ -253,7 +249,7 @@ If the filter express is `{{ data | customfilter }}`, you can get `data` by usin
 function customFilter(data) {
     if (data === true) {
         return 'This data is true';
-    } else if (this.data === false){
+    } else if (data === false){
         return 'This data is false';
     } else {
     	return 'This data is not a boolean value';
