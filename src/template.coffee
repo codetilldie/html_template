@@ -38,7 +38,7 @@ class HTMLTemplate
         return @
 
     compileFunction: (templateFunction) ->
-        throw 'The instance has compiled template' if @_compiled
+        throw 'This instance has compiled template' if @_compiled
         if typeof templateFunction isnt 'function'
             throw "HTMLTemplate.compileFunction: given not a function"
         return @compileString templateFunction.toString().replace @_regFlag, ''
