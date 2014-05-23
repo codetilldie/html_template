@@ -238,7 +238,8 @@ class HTMLTemplate
     _addArguments: (str) ->
         arr = trim(str).split /[.| ]+/
         str = arr[0]
-        @_args.push str if str.length isnt 0 and indexOf(@_args, str) is -1
+        if /^[a-zA-Z$_]+$/.test(str) and indexOf(@_args, str) is -1
+            @_args.push str
 
     _for_parser: (expr) ->
         parts = trim(expr).split /\s+in\s+/
@@ -273,7 +274,7 @@ class HTMLTemplate
         """
 
     _endfor_parser: (expr) ->
-        return '})'
+        return '});'
 
     _if_parser: (expr) ->
         expr = trim(expr).replace /\w+/g, (key) ->

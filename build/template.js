@@ -337,7 +337,7 @@
       var arr;
       arr = trim(str).split(/[.| ]+/);
       str = arr[0];
-      if (str.length !== 0 && indexOf(this._args, str) === -1) {
+      if (/^[a-zA-Z$_]+$/.test(str) && indexOf(this._args, str) === -1) {
         return this._args.push(str);
       }
     };
@@ -367,7 +367,7 @@
     };
 
     HTMLTemplate.prototype._endfor_parser = function(expr) {
-      return '})';
+      return '});';
     };
 
     HTMLTemplate.prototype._if_parser = function(expr) {
